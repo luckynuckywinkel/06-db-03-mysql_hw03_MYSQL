@@ -264,7 +264,105 @@ mysql> SELECT * FROM INFORMATION_SCHEMA.USER_ATTRIBUTES where user='test';
 - на `MyISAM`,
 - на `InnoDB`.
 
-### Решение:  
+### Решение:   
+
+- Сделаем необходимые действия, в качестве запроса используем уже используемый ранее запрос:
+
+```
+mysql> SET profiling = 1;
+Query OK, 0 rows affected, 1 warning (0.01 sec)
+
+mysql> SHOW PROFILES;
+Empty set, 1 warning (0.00 sec)
+
+mysql> use test_db
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> SELECT COUNT(*) FROM orders WHERE price > 300;
++----------+
+| COUNT(*) |
++----------+
+|        1 |
++----------+
+1 row in set (0.00 sec)
+
+mysql> SHOW PROFILES;
++----------+------------+-----------------------------------------------+
+| Query_ID | Duration   | Query                                         |
++----------+------------+-----------------------------------------------+
+|        1 | 0.00025225 | SELECT DATABASE()                             |
+|        2 | 0.00142675 | show databases                                |
+|        3 | 0.00188725 | show tables                                   |
+|        4 | 0.00063400 | SELECT COUNT(*) FROM orders WHERE price > 300 |
++----------+------------+-----------------------------------------------+
+4 rows in set, 1 warning (0.00 sec)
+```
+
+- Посмотрим, какой используется движок:
+
+```
+mysql> SHOW TABLE STATUS;
++--------+--------+---------+------------+------+----------------+-------------+-----------------+--------------+-----------+----------------+---------------------+---------------------+------------+--------------------+----------+----------------+---------+
+| Name   | Engine | Version | Row_format | Rows | Avg_row_length | Data_length | Max_data_length | Index_length | Data_free | Auto_increment | Create_time         | Update_time         | Check_time | Collation          | Checksum | Create_options | Comment |
++--------+--------+---------+------------+------+----------------+-------------+-----------------+--------------+-----------+----------------+---------------------+---------------------+------------+--------------------+----------+----------------+---------+
+| orders | InnoDB |      10 | Dynamic    |    5 |           3276 |       16384 |               0 |            0 |         0 |              6 | 2023-10-23 09:48:28 | 2023-10-23 09:48:28 | NULL       | utf8mb4_0900_ai_ci |     NULL |                |         |
++--------+--------+---------+------------+------+----------------+-------------+-----------------+--------------+-----------+----------------+---------------------+---------------------+------------+--------------------+----------+----------------+---------+
+1 row in set (0.01 sec)
+```
+
+- Поменяем движок на таблице orders (да, сначала я пытался менять прямо на базу, что не правильно) на MyISAM и выполним тот же запрос, запрос занял ментше времени:
+
+```
+mysql> show tables;
++-------------------+
+| Tables_in_test_db |
++-------------------+
+| orders            |
++-------------------+
+1 row in set (0.01 sec)
+
+mysql> ALTER TABLE test_db ENGINE = MyISAM;
+ERROR 1146 (42S02): Table 'test_db.test_db' doesn't exist
+mysql> ALTER TABLE orders ENGINE = MyISAM;
+Query OK, 5 rows affected (0.05 sec)
+Records: 5  Duplicates: 0  Warnings: 0
+
+mysql> SELECT COUNT(*) FROM orders WHERE price > 300;
++----------+
+| COUNT(*) |
++----------+
+|        1 |
++----------+
+1 row in set (0.00 sec)
+
+mysql> SHOW PROFILES;
++----------+------------+-----------------------------------------------+
+| Query_ID | Duration   | Query                                         |
++----------+------------+-----------------------------------------------+
+|        7 | 0.00607175 | SHOW TABLE STATUS                             |
+|        8 | 0.00065250 | ALTER TABLE test_db ENGINE = MyISAM           |
+|        9 | 0.00008275 | ALTER TABLE ENGINE = MyISAM                   |
+|       10 | 0.00016950 | SELECT DATABASE()                             |
+|       11 | 0.00108800 | show databases                                |
+|       12 | 0.00422900 | show tables                                   |
+|       13 | 0.00129150 | ALTER TABLE test_db ENGINE = MyISAM           |
+|       14 | 0.00019250 | SELECT DATABASE()                             |
+|       15 | 0.00111500 | show databases                                |
+|       16 | 0.00207250 | show tables                                   |
+|       17 | 0.00132550 | ALTER TABLE test_db ENGINE = MyISAM           |
+|       18 | 0.00218600 | show tables                                   |
+|       19 | 0.00097625 | ALTER TABLE test_db ENGINE = MyISAM           |
+|       20 | 0.05795550 | ALTER TABLE orders ENGINE = MyISAM            |
+|       21 | 0.00039650 | SELECT COUNT(*) FROM orders WHERE price > 300 |
++----------+------------+-----------------------------------------------+
+15 rows in set, 1 warning (0.00 sec)
+```
+
+---
+
+
 
 
 
