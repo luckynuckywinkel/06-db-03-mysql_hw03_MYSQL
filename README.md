@@ -22,7 +22,7 @@
 
 ### Решение: 
 
-Поднимем виртуалку используя Vagrant и установим все необходимые компоненты, также, как мы делали в [предыдущей работе] (https://github.com/luckynuckywinkel/06-db-02-sql_hw02_PGSQL1/blob/main/ansible/main.yaml)
+Поднимем виртуалку используя Vagrant и установим все необходимые компоненты, также, как мы делали в [предыдущей работе](https://github.com/luckynuckywinkel/06-db-02-sql_hw02_PGSQL1/blob/main/ansible/main.yaml)
 
 ## Задача 2
 
