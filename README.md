@@ -177,7 +177,81 @@ mysql> select * from orders where price > 300;
 Предоставьте привелегии пользователю `test` на операции SELECT базы `test_db`.
     
 Используя таблицу INFORMATION_SCHEMA.USER_ATTRIBUTES, получите данные по пользователю `test` и 
-**приведите в ответе к задаче**.
+**приведите в ответе к задаче**.  
+
+### Решение:  
+
+- Прежде чем начать создавать нового пользователя и задавать ему различные параметры, выдвдим пользователю admin все необходимые для этого права (зайдя под рутом):
+
+```
+mysql> SELECT user, host FROM mysql.user;
++------------------+-----------+
+| user             | host      |
++------------------+-----------+
+| admin            | %         |
+| root             | %         |
+| mysql.infoschema | localhost |
+| mysql.session    | localhost |
+| mysql.sys        | localhost |
+| root             | localhost |
++------------------+-----------+
+6 rows in set (0.00 sec)
+
+mysql> GRANT ALL PRIVILEGES ON *.* TO 'admin'@'%' WITH GRANT OPTION;
+Query OK, 0 rows affected (0.00 sec)
+```
+
+- Продолжим под админом:
+
+```
+bash-4.4# mysql -u admin -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 18
+Server version: 8.1.0 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2023, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> CREATE USER 'test'@'localhost' IDENTIFIED WITH 'mysql_native_password' BY 'test-pass';
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> ALTER USER 'test'@'localhost' PASSWORD EXPIRE INTERVAL 180 DAY;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> ALTER USER 'test'@'localhost' FAILED_LOGIN_ATTEMPTS 3;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> ALTER USER 'test'@'localhost' WITH MAX_QUERIES_PER_HOUR 100;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> ALTER USER 'test'@'localhost' ATTRIBUTE '{"Lastname": "Pretty", "Firstname": "James"}';
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> GRANT SELECT ON test_db.* TO 'test'@'localhost';
+Query OK, 0 rows affected, 1 warning (0.01 sec)
+```
+
+- Получим данные по юзеру **test**:
+
+```
+mysql> SELECT * FROM INFORMATION_SCHEMA.USER_ATTRIBUTES where user='test';
++------+-----------+----------------------------------------------+
+| USER | HOST      | ATTRIBUTE                                    |
++------+-----------+----------------------------------------------+
+| test | localhost | {"Lastname": "Pretty", "Firstname": "James"} |
++------+-----------+----------------------------------------------+
+1 row in set (0.00 sec)
+```
+
+---
+
+
 
 ## Задача 3
 
@@ -189,6 +263,10 @@ mysql> select * from orders where price > 300;
 Измените `engine` и **приведите время выполнения и запрос на изменения из профайлера в ответе**:
 - на `MyISAM`,
 - на `InnoDB`.
+
+### Решение:  
+
+
 
 ## Задача 4 
 
