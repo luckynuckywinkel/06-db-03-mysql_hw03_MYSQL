@@ -312,7 +312,7 @@ mysql> SHOW TABLE STATUS;
 1 row in set (0.01 sec)
 ```
 
-- Поменяем движок на таблице orders (да, сначала я пытался менять прямо на базу, что не правильно) на MyISAM и выполним тот же запрос, запрос занял ментше времени:
+- Поменяем движок на таблице orders (да, сначала я пытался менять прямо на базу, что не правильно) на MyISAM и выполним тот же запрос, запрос занял меньше времени:
 
 ```
 mysql> show tables;
@@ -378,12 +378,61 @@ mysql> SHOW PROFILES;
 - буффер кеширования 30% от ОЗУ;
 - размер файла логов операций 100 Мб.
 
-Приведите в ответе изменённый файл `my.cnf`.
+Приведите в ответе изменённый файл `my.cnf`.  
+
+### Решение:  
+
+- После долгих поисков и манипуляций, нескольких заваливаний моего контейнера с mysql, вот мои параметры в my.cnf:
+
+```
+# For advice on how to change settings please see
+# http://dev.mysql.com/doc/refman/8.1/en/server-configuration-defaults.html
+
+[mysqld]
+#
+# Remove leading # and set to the amount of RAM for the most important data
+# cache in MySQL. Start at 70% of total RAM for dedicated server, else 10%.
+# innodb_buffer_pool_size = 128M
+#
+# Remove leading # to turn on a very important data integrity option: logging
+# changes to the binary log between backups.
+# log_bin
+#
+# Remove leading # to set options mainly useful for reporting servers.
+# The server defaults are faster for transactions and fast SELECTs.
+# Adjust sizes as needed, experiment to find the optimal values.
+# join_buffer_size = 128M
+# sort_buffer_size = 2M
+# read_rnd_buffer_size = 2M
+
+# Remove leading # to revert to previous value for default_authentication_plugin,
+# this will increase compatibility with older clients. For background, see:
+# https://dev.mysql.com/doc/refman/8.1/en/server-system-variables.html#sysvar_default_authentication_plugin
+# default-authentication-plugin=mysql_native_password
+skip-host-cache
+skip-name-resolve
+datadir=/var/lib/mysql
+socket=/var/run/mysqld/mysqld.sock
+secure-file-priv=/var/lib/mysql-files
+user=mysql
+
+pid-file=/var/run/mysqld/mysqld.pid
+
+innodb_flush_log_at_trx_commit = 2  <--- как часто буферы журнала транзакций должны быть сброшены на диск. 2 - компромисс, между 0 и 1(дефолт).
+innodb_file_per_table = 1 <--- каждая таблица InnoDB будет храниться в отдельном файле
+innodb_log_buffer_size = 1M
+innodb_buffer_pool_size = 2576980377 <--- цифровое значение 30% от 8Гб РАМа
+innodb_log_file_size = 100M
+
+[client]
+socket=/var/run/mysqld/mysqld.sock
+
+!includedir /etc/mysql/conf.d/
+```
+
+
+
 
 ---
 
-### Как оформить ДЗ
 
-Выполненное домашнее задание пришлите ссылкой на .md-файл в вашем репозитории.
-
----
